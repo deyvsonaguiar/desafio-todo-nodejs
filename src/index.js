@@ -11,8 +11,20 @@ app.listen(3000)
 
 const users = [];
 
+//middleware
 function checksExistsUserAccount(request, response, next) {
-  // Complete aqui
+  
+  const { username } = request.headers
+
+  const user = users.find((user) => user.username === username)
+
+  if(!user) {
+    return response.status(404).json({ error: "User not found"})
+  }
+
+  request.user = user
+
+  return next()
 }
 
 app.post('/users', (request, response) => {
@@ -20,7 +32,7 @@ app.post('/users', (request, response) => {
   const { name, username } = request.body
 
   const ifAlreadyExists = users.some(
-    users => users.name === name | users.username === username
+    users => users.username === username
   )
 
   if(ifAlreadyExists) {
@@ -40,11 +52,31 @@ app.post('/users', (request, response) => {
 });
 
 app.get('/todos', checksExistsUserAccount, (request, response) => {
-  // Complete aqui
+  
+  const { user } = request
+
+  return response.json(user)
+
 });
 
 app.post('/todos', checksExistsUserAccount, (request, response) => {
-  // Complete aqui
+  
+  const { title, deadline } = request.body
+  const { user } = request
+
+  const todoOperation = {
+    id: uuid(), // precisa ser um uuid
+    title,
+    done: false, 
+    deadline: new Date(deadline), 
+    created_at: new Date()
+  }
+
+  user.todos.push(todoOperation)
+
+  return response.status(201).json(user.todos)
+
+
 });
 
 app.put('/todos/:id', checksExistsUserAccount, (request, response) => {
